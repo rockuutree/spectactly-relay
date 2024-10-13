@@ -7,11 +7,15 @@ const app = express();
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 
-// Increase the limit if you're dealing with large frames
 app.use(bodyParser.raw({ type: 'image/jpeg', limit: '10mb' }));
 
 // Store connected clients
 const clients = new Set();
+
+// Add a route handler for the root path
+app.get('/', (req, res) => {
+    res.send('Spectacles Relay Server is running');
+});
 
 app.post('/upload', (req, res) => {
     const frame = req.body;
