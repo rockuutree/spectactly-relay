@@ -1,45 +1,36 @@
 const express = require('express');
 const http = require('http');
 const WebSocket = require('ws');
-const bodyParser = require('body-parser');
+const cors = require('cors');
 
 const app = express();
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 
-app.use(bodyParser.raw({ type: 'image/jpeg', limit: '10mb' }));
+app.use(cors());
+app.use(express.json());
 
-const clients = new Set();
+let spectaclesConnection = null;
 
-app.get('/', (req, res) => {
-    res.send('Spectacles Relay Server is running');
-});
-
-app.post('/upload', (req, res) => {
-    const frame = req.body;
-    
-    clients.forEach(client => {
-        if (client.readyState === WebSocket.OPEN) {
-            client.send(frame);
-        }
-    });
-
-    res.sendStatus(200);
+app.post('/send-text', (req, res) => {
+    const { text } = req.body;
+    if (spectaclesConnection && spectaclesConnection.readyState === WebSocket.OPEN) {
+        spectaclesConnection.send(JSON.stringify({ type: 'text', content: text }));
+        res.json({ success: true, message: 'Text sent to Spectacles' });
+    } else {
+        res.status(503).json({ success: false, message: 'Spectacles not connected' });
+    }
 });
 
 wss.on('connection', (ws) => {
-    clients.add(ws);
-    console.log('Client connected');
+    console.log('Spectacles connected');
+    spectaclesConnection = ws;
 
     ws.on('close', () => {
-        clients.delete(ws);
-        console.log('Client disconnected');
+        console.log('Spectacles disconnected');
+        spectaclesConnection = null;
     });
 });
 
-// Use a default port if process.env.PORT is not set
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-    console.log(`Access the server at http://localhost:${PORT}`);
-});
+server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
