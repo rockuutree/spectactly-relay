@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spectacles Frame Viewer</title>
+</head>
+<body>
+    <img id="frame" src="" alt="Spectacles Frame">
+    <script>
+        const img = document.getElementById('frame');
+        const ws = new WebSocket('ws://localhost:3000');
+
+        ws.onmessage = (event) => {
+            const blob = new Blob([event.data], {type: 'image/jpeg'});
+            img.src = URL.createObjectURL(blob);
+        };
+    </script>
+</body>
+</html>
